@@ -1,3 +1,4 @@
+
 /**
  * TRANSCRIPTION AGENT
  * Servicio independiente para transcribir audios con OpenAI Whisper
@@ -98,7 +99,8 @@ app.post('/transcribe', async (req: Request, res: Response) => {
     console.log(`✅ [TRANSCRIPTION] Audio downloaded: ${audioBuffer.length} bytes`);
 
     // Step 2: Transcribe with Whisper
-    const tempFilePath = join('/tmp', `audio-${Date.now()}.opus`);
+    // Use .ogg extension (opus codec in ogg container - supported by Whisper)
+    const tempFilePath = join('/tmp', `audio-${Date.now()}.ogg`);
     await fs.writeFile(tempFilePath, audioBuffer);
 
     let transcript = '';
@@ -180,7 +182,7 @@ app.post('/transcribe/async', async (req: Request, res: Response) => {
         });
         const audioBuffer = Buffer.from(audioResponse.data);
 
-        const tempFilePath = join('/tmp', `audio-${Date.now()}.opus`);
+        const tempFilePath = join('/tmp', `audio-${Date.now()}.ogg`);
         await fs.writeFile(tempFilePath, audioBuffer);
 
         let transcript = '';
