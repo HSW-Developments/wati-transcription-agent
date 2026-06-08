@@ -30,6 +30,9 @@ const CONFIG = {
     apiKey: process.env.OPENAI_API_KEY || '',
     whisperModel: 'whisper-1',
   },
+  wati: {
+    apiToken: process.env.WATI_API_TOKEN || '',
+  },
   supabase: {
     url: process.env.SUPABASE_URL || '',
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
@@ -39,7 +42,7 @@ const CONFIG = {
 };
 
 // Validate configuration
-const requiredVars = ['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const requiredVars = ['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'WATI_API_TOKEN'];
 const missingVars = requiredVars.filter(v => !process.env[v]);
 if (missingVars.length > 0) {
   console.error(`❌ Missing required env vars: ${missingVars.join(', ')}`);
@@ -82,11 +85,14 @@ app.post('/transcribe', async (req: Request, res: Response) => {
 
     console.log(`🎙️ [TRANSCRIPTION] Starting: ${messageId}`);
 
-    // Step 1: Download audio from Wati
+    // Step 1: Download audio from Wati with authentication
     console.log(`📥 [TRANSCRIPTION] Downloading audio from: ${audioUrl}`);
     const audioResponse = await axios.get(audioUrl, {
       responseType: 'arraybuffer',
       timeout: 30000,
+      headers: {
+        Authorization: `Bearer ${CONFIG.wati.apiToken}`,
+      },
     });
     const audioBuffer = Buffer.from(audioResponse.data);
     console.log(`✅ [TRANSCRIPTION] Audio downloaded: ${audioBuffer.length} bytes`);
@@ -169,6 +175,9 @@ app.post('/transcribe/async', async (req: Request, res: Response) => {
         const audioResponse = await axios.get(audioUrl, {
           responseType: 'arraybuffer',
           timeout: 30000,
+          headers: {
+            Authorization: `Bearer ${CONFIG.wati.apiToken}`,
+          },
         });
         const audioBuffer = Buffer.from(audioResponse.data);
 
