@@ -5,7 +5,7 @@
  */
 
 import express, { Request, Response } from 'express';
-import { promises as fs } from 'fs';
+import { promises as fs, createReadStream } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import axios from 'axios';
@@ -101,11 +101,11 @@ app.post('/transcribe', async (req: Request, res: Response) => {
     const tempFilePath = join('/tmp', `audio-${Date.now()}.opus`);
     await fs.writeFile(tempFilePath, audioBuffer);
 
-    const fileStream = await fs.open(tempFilePath, 'r');
     let transcript = '';
 
     try {
       console.log(`🎙️ [WHISPER] Sending to Whisper API...`);
+      const fileStream = createReadStream(tempFilePath);
       const transcription = await openai.audio.transcriptions.create({
         file: fileStream as any,
         model: CONFIG.openai.whisperModel,
@@ -115,7 +115,6 @@ app.post('/transcribe', async (req: Request, res: Response) => {
       transcript = typeof transcription === 'string' ? transcription : (transcription as any).text || '';
       console.log(`✅ [WHISPER] Transcription: "${transcript}"`);
     } finally {
-      await fileStream.close();
       await fs.unlink(tempFilePath);
     }
 
@@ -183,10 +182,10 @@ app.post('/transcribe/async', async (req: Request, res: Response) => {
 
         const tempFilePath = join('/tmp', `audio-${Date.now()}.opus`);
         await fs.writeFile(tempFilePath, audioBuffer);
-        const fileStream = await fs.open(tempFilePath, 'r');
 
         let transcript = '';
         try {
+          const fileStream = createReadStream(tempFilePath);
           const transcription = await openai.audio.transcriptions.create({
             file: fileStream as any,
             model: CONFIG.openai.whisperModel,
@@ -195,7 +194,6 @@ app.post('/transcribe/async', async (req: Request, res: Response) => {
           });
           transcript = typeof transcription === 'string' ? transcription : (transcription as any).text || '';
         } finally {
-          await fileStream.close();
           await fs.unlink(tempFilePath);
         }
 
